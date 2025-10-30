@@ -234,6 +234,15 @@ class InkEditor extends DrawingEditor {
     );
   }
 
+  // Evidential Edit: Allow opacity to be set for ink drawings
+  /** @inheritdoc */
+  static updateDefaultParams(type, value) {
+    super.updateDefaultParams(type, value);
+    if (type === AnnotationEditorParamsType.INK_OPACITY) {
+      this._defaultDrawingOptions["stroke-opacity"] = value;
+    }
+  }
+
   /** @inheritdoc */
   createDrawingOptions({ color, thickness, opacity }) {
     this._drawingOptions = InkEditor.getDefaultDrawingOptions({

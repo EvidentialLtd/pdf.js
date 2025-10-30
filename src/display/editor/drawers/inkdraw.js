@@ -536,14 +536,14 @@ class InkDrawOutline extends Outline {
     for (let i = 0, ii = lines.length; i < ii; i++) {
       newLines.push({
         line: rescaleFn(
-          lines[i].map(x => x ?? NaN),
+           Object.values(lines[i]).map(x => x ?? NaN), // Evidential Edit: Fix deserialization bug
           tx,
           ty,
           sx,
           sy
         ),
         points: rescaleFn(
-          points[i].map(x => x ?? NaN),
+           Object.values(points[i]).map(x => x ?? NaN), // Evidential Edit: Fix deserialization bug
           tx,
           ty,
           sx,

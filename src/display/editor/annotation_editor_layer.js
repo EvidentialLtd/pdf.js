@@ -145,7 +145,9 @@ class AnnotationEditorLayer {
   }
 
   get isEmpty() {
-    return this.#editors.size === 0;
+    // Evidential Edit: Keep comments visible even where there are no other annotations
+    // return this.#editors.size === 0;
+    return false
   }
 
   get isInvisible() {
@@ -403,9 +405,10 @@ class AnnotationEditorLayer {
     }
 
     this.#cleanup();
-    if (this.isEmpty) {
-      this.div.hidden = true;
-    }
+    // Evidential Edit: Commented out below for some reason
+    // if (this.isEmpty) {
+    //   this.div.hidden = true;
+    // }
     const { classList } = this.div;
     for (const editorType of AnnotationEditorLayer.#editorTypes.values()) {
       classList.remove(`${editorType._type}Editing`);
@@ -595,6 +598,7 @@ class AnnotationEditorLayer {
 
     // The editor will be correctly moved into the DOM (see fixAndSetPosition).
     editor.fixAndSetPosition();
+    // Evidential Edit: Commented out below
     editor.onceAdded(/* focus = */ !this.#isEnabling);
     this.#uiManager.addToAnnotationStorage(editor);
     editor._reportTelemetry(editor.telemetryInitialData);
@@ -687,6 +691,32 @@ class AnnotationEditorLayer {
 
   combinedSignal(ac) {
     return this.#uiManager.combinedSignal(ac);
+  }
+
+  // Evidential Edit: modified to expose create newEditor
+  createNewEditor(params) {
+    let editorType;
+    if (params.editorMode) {
+      editorType = AnnotationEditorLayer.#editorTypes.get(params.editorMode);
+    }
+    editorType = editorType || this.#currentEditorType;
+
+    const {
+      offsetX,
+      offsetY
+    } = this.#getCenterPoint();
+    const id = params.id || this.getNextId();
+
+    params = {
+      parent: this,
+      id,
+      x: params.x || offsetX,
+      y: params.y || offsetY,
+      uiManager: this.#uiManager,
+      isCentered: false,
+      ...params
+    }
+    return editorType ? new editorType.prototype.constructor(params) : null;
   }
 
   /**

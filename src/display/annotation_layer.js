@@ -3199,8 +3199,12 @@ class SquareAnnotationElement extends AnnotationElement {
     // Create the popup ourselves so that we can bind it to the square instead
     // of to the entire container (which is the default).
     if (!data.popupRef && this.hasPopupData) {
-      this.hasOwnCommentButton = true;
+      /* Evidential Edit: Don't show popups for square annotations as we use these for redactions
       this._createPopup();
+      */
+     
+      // this.hasOwnCommentButton = true;
+      // this._createPopup();
     }
 
     return this.container;

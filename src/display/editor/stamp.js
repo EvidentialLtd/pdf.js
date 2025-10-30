@@ -48,6 +48,8 @@ class StampEditor extends AnnotationEditor {
   #isSvg = false;
 
   #hasBeenAddedInUndoStack = false;
+  
+  #epeImagePath = null; // Evidential Edit: Added cutom image path attribute
 
   static _type = "stamp";
 
@@ -57,6 +59,7 @@ class StampEditor extends AnnotationEditor {
     super({ ...params, name: "stampEditor" });
     this.#bitmapUrl = params.bitmapUrl;
     this.#bitmapFile = params.bitmapFile;
+    this.#epeImagePath = params.epeImagePath; // Evidential Edit: Added cutom image path attribute
     this.defaultL10nId = "pdfjs-editor-stamp-editor";
   }
 
@@ -809,7 +812,8 @@ class StampEditor extends AnnotationEditor {
       };
     }
     const editor = await super.deserialize(data, parent, uiManager);
-    const { rect, bitmap, bitmapUrl, bitmapId, isSvg, accessibilityData } =
+    // Evidential Edit: added epeImagePath attribute
+    const { rect, bitmap, bitmapUrl, bitmapId, isSvg, accessibilityData, epeImagePath } =
       data;
     if (missingCanvas) {
       uiManager.addMissingCanvas(data.id, editor);
@@ -822,6 +826,7 @@ class StampEditor extends AnnotationEditor {
     } else {
       editor.#bitmapUrl = bitmapUrl;
     }
+    editor.#epeImagePath = epeImagePath; // Evidential Edit: Added cutom image path attribute
     editor.#isSvg = isSvg;
 
     const [parentWidth, parentHeight] = editor.pageDimensions;
@@ -855,7 +860,8 @@ class StampEditor extends AnnotationEditor {
     const serialized = Object.assign(super.serialize(isForCopying), {
       bitmapId: this.#bitmapId,
       isSvg: this.#isSvg,
-    });
+      epeImagePath: this.#epeImagePath // Evidential Edit: Added cutom image path
+    }); 
     this.addComment(serialized);
 
     if (isForCopying) {

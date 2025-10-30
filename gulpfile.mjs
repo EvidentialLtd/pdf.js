@@ -1140,6 +1140,10 @@ function buildGeneric(defines, dir) {
     gulp
       .src("web/compressed.tracemonkey-pldi-09.pdf", { encoding: false })
       .pipe(gulp.dest(dir + "web")),
+    // Evidential Edit: Add blank pdf to web build
+    gulp
+      .src("web/blank.pdf", { encoding: false })
+      .pipe(gulp.dest(dir + "web")),
   ]);
 }
 

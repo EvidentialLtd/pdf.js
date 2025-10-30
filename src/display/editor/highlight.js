@@ -791,6 +791,7 @@ class HighlightEditor extends AnnotationEditor {
   }
 
   static startHighlighting(parent, isLTR, { target: textLayer, x, y }) {
+    // return; // Evidential Edit: Block Freehand highlighting
     const {
       x: layerX,
       y: layerY,
