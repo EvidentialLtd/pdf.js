@@ -534,6 +534,7 @@ pdfjs-editor-undo-bar-message-freetext = Texto removite
 pdfjs-editor-undo-bar-message-ink = Designo removite
 pdfjs-editor-undo-bar-message-stamp = Imagine removite
 pdfjs-editor-undo-bar-message-signature = Signatura removite
+pdfjs-editor-undo-bar-message-comment = Commento removite
 # Variables:
 #   $count (Number) - the number of removed annotations.
 pdfjs-editor-undo-bar-message-multiple =
@@ -618,18 +619,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Actiones
-pdfjs-editor-edit-comment-actions-button =
-    .title = Actiones
-pdfjs-editor-edit-comment-close-button-label = Clauder
-pdfjs-editor-edit-comment-close-button =
-    .title = Clauder
-pdfjs-editor-edit-comment-actions-edit-button-label = Rediger
-pdfjs-editor-edit-comment-actions-delete-button-label = Deler
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Insere tu commento
-pdfjs-editor-edit-comment-manager-cancel-button = Cancellar
-pdfjs-editor-edit-comment-manager-save-button = Salvar
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Rediger commento
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Actualisar
@@ -642,8 +631,81 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Cancellar
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Rediger commento
+pdfjs-editor-add-comment-button =
+    .title = Adder commento
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Monstrar/celar le barra lateral
+pdfjs-toggle-views-manager-notification-button =
+    .title = Monstrar/celar le barra lateral (le documento contine miniaturas/structura/attachamentos/stratos)
+pdfjs-toggle-views-manager-button-label = Monstrar/celar le barra lateral
+pdfjs-views-manager-sidebar =
+    .aria-label = Barra lateral
+pdfjs-views-manager-view-selector-button =
+    .title = Vistas
+pdfjs-views-manager-view-selector-button-label = Vistas
+pdfjs-views-manager-pages-title = Paginas
+pdfjs-views-manager-outlines-title = Schema del documento
+pdfjs-views-manager-attachments-title = Annexos
+pdfjs-views-manager-layers-title = Stratos
+pdfjs-views-manager-pages-option-label = Paginas
+pdfjs-views-manager-outlines-option-label = Schema del documento
+pdfjs-views-manager-attachments-option-label = Annexos
+pdfjs-views-manager-layers-option-label = Stratos
+pdfjs-views-manager-add-file-button =
+    .title = Adder file
+pdfjs-views-manager-add-file-button-label = Adder file
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] { $count } seligite
+       *[other] { $count } seligite
+    }
+pdfjs-views-manager-pages-status-none-action-label = Seliger paginas
+pdfjs-views-manager-pages-status-action-button-label = Gerer
+pdfjs-views-manager-pages-status-copy-button-label = Copiar
+pdfjs-views-manager-pages-status-cut-button-label = Secar
+pdfjs-views-manager-pages-status-delete-button-label = Deler
+pdfjs-views-manager-pages-status-save-as-button-label = Salvar como…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] 1 pagina secate
+       *[other] { $count } paginas secate
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] 1 pagina copiate
+       *[other] { $count } paginas copiate
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] 1 pagina delite
+       *[other] { $count } paginas delite
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Preparante file…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Cargante file…
+pdfjs-views-manager-status-warning-cut-label = Impossibile secar. Refresca le pagina e retenta.
+pdfjs-views-manager-status-warning-copy-label = Impossibile copiar. Refresca le pagina e retenta.
+pdfjs-views-manager-status-warning-delete-label = Impossibile deler. Refresca le pagina e retenta.
+pdfjs-views-manager-status-warning-save-label = Impossibile salvar. Refresca le pagina e retenta.
+pdfjs-views-manager-status-undo-button-label = Disfacer
+pdfjs-views-manager-status-close-button =
+    .title = Clauder
+pdfjs-views-manager-status-close-button-label = Clauder
 
 ## Main menu for adding/removing signatures
 

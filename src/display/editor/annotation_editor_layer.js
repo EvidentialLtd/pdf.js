@@ -18,12 +18,12 @@
 /** @typedef {import("../display_utils.js").PageViewport} PageViewport */
 // eslint-disable-next-line max-len
 /** @typedef {import("../../../web/text_accessibility.js").TextAccessibilityManager} TextAccessibilityManager */
-/** @typedef {import("../../../web/interfaces").IL10n} IL10n */
 // eslint-disable-next-line max-len
 /** @typedef {import("../annotation_layer.js").AnnotationLayer} AnnotationLayer */
 /** @typedef {import("../draw_layer.js").DrawLayer} DrawLayer */
 // eslint-disable-next-line max-len
-/** @typedef {import("../src/display/struct_tree_layer_builder.js").StructTreeLayerBuilder} StructTreeLayerBuilder */
+/** @typedef {import("../../../web/struct_tree_layer_builder.js").StructTreeLayerBuilder} StructTreeLayerBuilder */
+/** @typedef {import("../../../web/l10n.js").L10n} L10n */
 
 import {
   AnnotationEditorPrefix,
@@ -47,7 +47,7 @@ import { StampEditor } from "./stamp.js";
  * @property {boolean} enabled
  * @property {TextAccessibilityManager} [accessibilityManager]
  * @property {number} pageIndex
- * @property {IL10n} l10n
+ * @property {L10n} l10n
  * @property {AnnotationLayer} [annotationLayer]
  * @property {HTMLDivElement} [textLayer]
  * @property {DrawLayer} drawLayer
@@ -142,6 +142,10 @@ class AnnotationEditorLayer {
     this._structTree = structTreeLayer;
 
     this.#uiManager.addLayer(this);
+  }
+
+  updatePageIndex(newPageIndex) {
+    this.pageIndex = newPageIndex;
   }
 
   get isEmpty() {
@@ -564,7 +568,7 @@ class AnnotationEditorLayer {
     }
 
     if (editor.parent && editor.annotationElementId) {
-      this.#uiManager.addDeletedAnnotationElement(editor.annotationElementId);
+      this.#uiManager.addDeletedAnnotationElement(editor);
       AnnotationEditor.deleteAnnotationElement(editor);
       editor.annotationElementId = null;
     }

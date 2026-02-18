@@ -181,8 +181,8 @@ pdfjs-layers-button =
     .title = Lagen toane (dûbelklik om alle lagen nei de standertsteat werom te setten)
 pdfjs-layers-button-label = Lagen
 pdfjs-thumbs-button =
-    .title = Foarbylden toane
-pdfjs-thumbs-button-label = Foarbylden
+    .title = Miniatueren toane
+pdfjs-thumbs-button-label = Miniatueren
 pdfjs-current-outline-item-button =
     .title = Aktueel item yn ynhâldsopjefte sykje
 pdfjs-current-outline-item-button-label = Aktueel item yn ynhâldsopjefte
@@ -200,7 +200,7 @@ pdfjs-thumb-page-title =
 # Variables:
 #   $page (Number) - the page number
 pdfjs-thumb-page-canvas =
-    .aria-label = Foarbyld fan side { $page }
+    .aria-label = Miniatuer fan side { $page }
 
 ## Find panel button title and messages
 
@@ -618,18 +618,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Aksjes
-pdfjs-editor-edit-comment-actions-button =
-    .title = Aksjes
-pdfjs-editor-edit-comment-close-button-label = Slute
-pdfjs-editor-edit-comment-close-button =
-    .title = Slute
-pdfjs-editor-edit-comment-actions-edit-button-label = Bewurkje
-pdfjs-editor-edit-comment-actions-delete-button-label = Fuortsmite
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Fier jo opmerking yn
-pdfjs-editor-edit-comment-manager-cancel-button = Annulearje
-pdfjs-editor-edit-comment-manager-save-button = Bewarje
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Opmerking bewurkje
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Bywurkje
@@ -642,8 +630,81 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Annulearje
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Opmerking bewurkje
+pdfjs-editor-add-comment-button =
+    .title = Opmerking tafoegje
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Sidebalke yn-/útskeakelje
+pdfjs-toggle-views-manager-notification-button =
+    .title = Sidebalke yn-/útskeakelje (dokumint befettet miniatueren/oersjoch/bylagen/lagen)
+pdfjs-toggle-views-manager-button-label = Sidebalke yn-/útskeakelje
+pdfjs-views-manager-sidebar =
+    .aria-label = Sidebalke
+pdfjs-views-manager-view-selector-button =
+    .title = Werjeften
+pdfjs-views-manager-view-selector-button-label = Werjeften
+pdfjs-views-manager-pages-title = Siden
+pdfjs-views-manager-outlines-title = Dokumintoersjoch
+pdfjs-views-manager-attachments-title = Bylagen
+pdfjs-views-manager-layers-title = Lagen
+pdfjs-views-manager-pages-option-label = Siden
+pdfjs-views-manager-outlines-option-label = Dokumintoersjoch
+pdfjs-views-manager-attachments-option-label = Bylagen
+pdfjs-views-manager-layers-option-label = Lagen
+pdfjs-views-manager-add-file-button =
+    .title = Bestân tafoegje
+pdfjs-views-manager-add-file-button-label = Bestân tafoegje
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] { $count } selektearre
+       *[other] { $count } selektearre
+    }
+pdfjs-views-manager-pages-status-none-action-label = Siden selektearje
+pdfjs-views-manager-pages-status-action-button-label = Beheare
+pdfjs-views-manager-pages-status-copy-button-label = Kopiearje
+pdfjs-views-manager-pages-status-cut-button-label = Knippe
+pdfjs-views-manager-pages-status-delete-button-label = Fuortsmite
+pdfjs-views-manager-pages-status-save-as-button-label = Bewarje as…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] 1 side knipt
+       *[other] { $count } siden knipt
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] 1 side kopiearre
+       *[other] { $count } siden kopiearre
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] 1 side fuortsmiten
+       *[other] { $count } siden fuortsmiten
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Jo bestân tariede…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Bestân oplade…
+pdfjs-views-manager-status-warning-cut-label = Kin net knippe. Ferfarskje de side en probearje it opnij.
+pdfjs-views-manager-status-warning-copy-label = Kin net kopiearje. Ferfarskje de side en probearje it opnij.
+pdfjs-views-manager-status-warning-delete-label = Kin net fuortsmite. Ferfarskje de side en probearje it opnij.
+pdfjs-views-manager-status-warning-save-label = Kin net bewarje. Ferfarskje de side en probearje it opnij.
+pdfjs-views-manager-status-undo-button-label = Ungedien meitsje
+pdfjs-views-manager-status-close-button =
+    .title = Slute
+pdfjs-views-manager-status-close-button-label = Slute
 
 ## Main menu for adding/removing signatures
 

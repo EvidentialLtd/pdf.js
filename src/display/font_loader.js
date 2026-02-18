@@ -19,7 +19,6 @@ import {
   isNodeJS,
   shadow,
   string32,
-  toBase64Util,
   unreachable,
   warn,
 } from "../shared/util.js";
@@ -408,7 +407,7 @@ class FontFaceObject {
       return null;
     }
     // Add the @font-face rule to the document.
-    const url = `url(data:${this.mimetype};base64,${toBase64Util(this.data)});`;
+    const url = `url(data:${this.mimetype};base64,${this.data.toBase64()});`;
     let rule;
     if (!this.cssFontInfo) {
       rule = `@font-face {font-family:"${this.loadedName}";src:${url}}`;
@@ -436,7 +435,7 @@ class FontFaceObject {
     } catch (ex) {
       warn(`getPathGenerator - ignoring character: "${ex}".`);
     }
-    const path = makePathFromDrawOPS(cmds);
+    const path = makePathFromDrawOPS(cmds?.path);
 
     if (!this.fontExtraProperties) {
       // Remove the raw path-string, since we don't need it anymore.
@@ -455,6 +454,10 @@ class FontFaceObject {
 
   get disableFontFace() {
     return this.#fontData.disableFontFace ?? false;
+  }
+
+  set disableFontFace(value) {
+    shadow(this, "disableFontFace", !!value);
   }
 
   get fontExtraProperties() {
@@ -499,6 +502,10 @@ class FontFaceObject {
 
   get bbox() {
     return this.#fontData.bbox;
+  }
+
+  set bbox(bbox) {
+    shadow(this, "bbox", bbox);
   }
 
   get fontMatrix() {

@@ -534,6 +534,7 @@ pdfjs-editor-undo-bar-message-freetext = Tekst verwijderd
 pdfjs-editor-undo-bar-message-ink = Tekening verwijderd
 pdfjs-editor-undo-bar-message-stamp = Afbeelding verwijderd
 pdfjs-editor-undo-bar-message-signature = Handtekening verwijderd
+pdfjs-editor-undo-bar-message-comment = Opmerking verwijderd
 # Variables:
 #   $count (Number) - the number of removed annotations.
 pdfjs-editor-undo-bar-message-multiple =
@@ -618,18 +619,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Acties
-pdfjs-editor-edit-comment-actions-button =
-    .title = Acties
-pdfjs-editor-edit-comment-close-button-label = Sluiten
-pdfjs-editor-edit-comment-close-button =
-    .title = Sluiten
-pdfjs-editor-edit-comment-actions-edit-button-label = Bewerken
-pdfjs-editor-edit-comment-actions-delete-button-label = Verwijderen
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Voer uw opmerking in
-pdfjs-editor-edit-comment-manager-cancel-button = Annuleren
-pdfjs-editor-edit-comment-manager-save-button = Opslaan
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Opmerking bewerken
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Bijwerken
@@ -642,8 +631,81 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Annuleren
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Opmerking bewerken
+pdfjs-editor-add-comment-button =
+    .title = Opmerking toevoegen
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Zijbalk in-/uitschakelen
+pdfjs-toggle-views-manager-notification-button =
+    .title = Zijbalk in-/uitschakelen (document bevat miniaturen/overzicht/bijlagen/lagen)
+pdfjs-toggle-views-manager-button-label = Zijbalk in-/uitschakelen
+pdfjs-views-manager-sidebar =
+    .aria-label = Zijbalk
+pdfjs-views-manager-view-selector-button =
+    .title = Weergaven
+pdfjs-views-manager-view-selector-button-label = Weergaven
+pdfjs-views-manager-pages-title = Pagina’s
+pdfjs-views-manager-outlines-title = Documentoverzicht
+pdfjs-views-manager-attachments-title = Bijlagen
+pdfjs-views-manager-layers-title = Lagen
+pdfjs-views-manager-pages-option-label = Pagina’s
+pdfjs-views-manager-outlines-option-label = Documentoverzicht
+pdfjs-views-manager-attachments-option-label = Bijlagen
+pdfjs-views-manager-layers-option-label = Lagen
+pdfjs-views-manager-add-file-button =
+    .title = Bestand toevoegen
+pdfjs-views-manager-add-file-button-label = Bestand toevoegen
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] { $count } geselecteerd
+       *[other] { $count } geselecteerd
+    }
+pdfjs-views-manager-pages-status-none-action-label = Pagina’s selecteren
+pdfjs-views-manager-pages-status-action-button-label = Beheren
+pdfjs-views-manager-pages-status-copy-button-label = Kopiëren
+pdfjs-views-manager-pages-status-cut-button-label = Knippen
+pdfjs-views-manager-pages-status-delete-button-label = Verwijderen
+pdfjs-views-manager-pages-status-save-as-button-label = Opslaan als…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] 1 pagina geknipt
+       *[other] { $count } pagina’s geknipt
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] 1 pagina gekopieerd
+       *[other] { $count } pagina’s gekopieerd
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] 1 pagina verwijderd
+       *[other] { $count } pagina’s verwijderd
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Uw bestand voorbereiden…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Bestand uploaden…
+pdfjs-views-manager-status-warning-cut-label = Kan niet knippen. Vernieuw de pagina en probeer het opnieuw.
+pdfjs-views-manager-status-warning-copy-label = Kan niet kopiëren. Vernieuw de pagina en probeer het opnieuw.
+pdfjs-views-manager-status-warning-delete-label = Kan niet verwijderen. Vernieuw de pagina en probeer het opnieuw.
+pdfjs-views-manager-status-warning-save-label = Kan niet opslaan. Vernieuw de pagina en probeer het opnieuw.
+pdfjs-views-manager-status-undo-button-label = Ongedaan maken
+pdfjs-views-manager-status-close-button =
+    .title = Sluiten
+pdfjs-views-manager-status-close-button-label = Sluiten
 
 ## Main menu for adding/removing signatures
 

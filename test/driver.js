@@ -506,6 +506,7 @@ class Driver {
     this.inFlightRequests = 0;
     this.testFilter = JSON.parse(params.get("testfilter") || "[]");
     this.xfaOnly = params.get("xfaonly") === "true";
+    this.masterMode = params.get("mastermode") === "true";
 
     // Create a working canvas
     this.canvas = document.createElement("canvas");
@@ -591,6 +592,25 @@ class Driver {
       task.stats = { times: [] };
       task.enableXfa = task.enableXfa === true;
 
+      if (task.includePages && task.type === "extract") {
+        if (this.masterMode) {
+          const includePages = [];
+          for (const page of task.includePages) {
+            if (Array.isArray(page)) {
+              for (let i = page[0]; i <= page[1]; i++) {
+                includePages.push(i);
+              }
+            } else {
+              includePages.push(page);
+            }
+          }
+          task.numberOfTasks = includePages.length;
+          task.includePages = includePages;
+        } else {
+          delete task.pageMapping;
+        }
+      }
+
       const prevFile = md5FileMap.get(task.md5);
       if (prevFile) {
         if (task.file !== prevFile) {
@@ -607,6 +627,13 @@ class Driver {
       this._log(
         `[${this.currentTask + 1}/${this.manifest.length}] ${task.id}:\n`
       );
+
+      if (task.type === "skip-because-failing") {
+        this._log(`  Skipping file "${task.file} because it's failing"\n`);
+        this.currentTask++;
+        this._nextTask();
+        return;
+      }
 
       // Support *linked* test-cases for the other suites, e.g. unit- and
       // integration-tests, without needing to run them as reference-tests.
@@ -657,6 +684,20 @@ class Driver {
           disableFontFace,
         });
         let promise = loadingTask.promise;
+
+        if (!this.masterMode && task.type === "extract") {
+          promise = promise.then(async doc => {
+            const data = await doc.extractPages([
+              {
+                document: null,
+                includePages: task.includePages,
+              },
+            ]);
+            await loadingTask.destroy();
+            delete task.includePages;
+            return getDocument(data).promise;
+          });
+        }
 
         if (task.annotationStorage) {
           for (const annotation of Object.values(task.annotationStorage)) {
@@ -862,7 +903,12 @@ class Driver {
       }
     }
 
-    if (task.skipPages?.includes(task.pageNum)) {
+    if (
+      task.skipPages?.includes(task.pageNum) ||
+      (this.masterMode &&
+        task.includePages &&
+        !task.includePages.includes(task.pageNum - 1))
+    ) {
       this._log(
         `    Skipping page ${task.pageNum}/${task.pdfDoc.numPages}...\n`
       );
@@ -1274,10 +1320,11 @@ class Driver {
       id: task.id,
       numPages: task.pdfDoc ? task.lastPage || task.pdfDoc.numPages : 0,
       lastPageNum: this._getLastPageNumber(task),
+      numberOfTasks: task.numberOfTasks ?? -1,
       failure,
       file: task.file,
       round: task.round,
-      page: task.pageNum,
+      page: task.pageMapping?.[task.pageNum] ?? task.pageNum,
       snapshot,
       baselineSnapshot,
       stats: task.stats.times,

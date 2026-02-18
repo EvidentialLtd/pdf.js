@@ -618,18 +618,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Acciones
-pdfjs-editor-edit-comment-actions-button =
-    .title = Acciones
-pdfjs-editor-edit-comment-close-button-label = Cerrar
-pdfjs-editor-edit-comment-close-button =
-    .title = Cerrar
-pdfjs-editor-edit-comment-actions-edit-button-label = Editar
-pdfjs-editor-edit-comment-actions-delete-button-label = Borrar
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Ingresar un comentario
-pdfjs-editor-edit-comment-manager-cancel-button = Cancelar
-pdfjs-editor-edit-comment-manager-save-button = Guardar
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Editar comentario
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Actualizar
@@ -642,8 +630,81 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Cancelar
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Editar comentario
+pdfjs-editor-add-comment-button =
+    .title = Agregar comentario
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Alternar barra lateral
+pdfjs-toggle-views-manager-notification-button =
+    .title = Alternar barra lateral (el documento contiene miniaturas/esquemas/adjuntos/capas)
+pdfjs-toggle-views-manager-button-label = Alternar barra lateral
+pdfjs-views-manager-sidebar =
+    .aria-label = Barra lateral
+pdfjs-views-manager-view-selector-button =
+    .title = Vistas
+pdfjs-views-manager-view-selector-button-label = Vistas
+pdfjs-views-manager-pages-title = Páginas
+pdfjs-views-manager-outlines-title = Esquema del documento
+pdfjs-views-manager-attachments-title = Adjuntos
+pdfjs-views-manager-layers-title = Capas
+pdfjs-views-manager-pages-option-label = Páginas
+pdfjs-views-manager-outlines-option-label = Esquema del documento
+pdfjs-views-manager-attachments-option-label = Adjuntos
+pdfjs-views-manager-layers-option-label = Capas
+pdfjs-views-manager-add-file-button =
+    .title = Agregar archivo
+pdfjs-views-manager-add-file-button-label = Agregar archivo
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] { $count } seleccionada
+       *[other] { $count } seleccionadas
+    }
+pdfjs-views-manager-pages-status-none-action-label = Seleccionar páginas
+pdfjs-views-manager-pages-status-action-button-label = Administrar
+pdfjs-views-manager-pages-status-copy-button-label = Copiar
+pdfjs-views-manager-pages-status-cut-button-label = Cortar
+pdfjs-views-manager-pages-status-delete-button-label = Borrar
+pdfjs-views-manager-pages-status-save-as-button-label = Guardar como…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] 1 página cortada
+       *[other] { $count } páginas cortadas
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] 1 página copiada
+       *[other] { $count } páginas copiadas
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] 1 página borrada
+       *[other] { $count } páginas borradas
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Preparando el archivo…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Subiendo el archivo…
+pdfjs-views-manager-status-warning-cut-label = No se pudo cortar. Refresque la página y pruebe de nuevo.
+pdfjs-views-manager-status-warning-copy-label = No se pudo copiar. Refresque la página y pruebe de nuevo.
+pdfjs-views-manager-status-warning-delete-label = No se pudo borrar. Refresque la página y pruebe de nuevo.
+pdfjs-views-manager-status-warning-save-label = No se pudo guardar. Refresque la página y pruebe de nuevo.
+pdfjs-views-manager-status-undo-button-label = Deshacer
+pdfjs-views-manager-status-close-button =
+    .title = Cerrar
+pdfjs-views-manager-status-close-button-label = Cerrar
 
 ## Main menu for adding/removing signatures
 

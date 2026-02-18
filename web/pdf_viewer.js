@@ -20,13 +20,14 @@
 // eslint-disable-next-line max-len
 /** @typedef {import("../src/display/optional_content_config").OptionalContentConfig} OptionalContentConfig */
 /** @typedef {import("./event_utils").EventBus} EventBus */
-/** @typedef {import("./interfaces").IDownloadManager} IDownloadManager */
-/** @typedef {import("./interfaces").IL10n} IL10n */
-/** @typedef {import("./interfaces").IPDFLinkService} IPDFLinkService */
 // eslint-disable-next-line max-len
 /** @typedef {import("./pdf_find_controller").PDFFindController} PDFFindController */
 // eslint-disable-next-line max-len
 /** @typedef {import("./pdf_scripting_manager").PDFScriptingManager} PDFScriptingManager */
+/** @typedef {import("./pdf_link_service.js").PDFLinkService} PDFLinkService */
+// eslint-disable-next-line max-len
+/** @typedef {import("./base_download_manager.js").BaseDownloadManager} BaseDownloadManager */
+/** @typedef {import("./l10n.js").L10n} L10n */
 
 import {
   AnnotationEditorType,
@@ -54,7 +55,6 @@ import {
   MIN_SCALE,
   PresentationModeState,
   removeNullCharacters,
-  RenderingStates,
   SCROLLBAR_PADDING,
   scrollIntoView,
   ScrollMode,
@@ -67,6 +67,7 @@ import {
 import { GenericL10n } from "web-null_l10n";
 import { PDFPageView } from "./pdf_page_view.js";
 import { PDFRenderingQueue } from "./pdf_rendering_queue.js";
+import { RenderingStates } from "./renderable_view.js";
 import { SimpleLinkService } from "./pdf_link_service.js";
 
 const DEFAULT_CACHE_SIZE = 10;
@@ -89,8 +90,8 @@ function isValidAnnotationEditorMode(mode) {
  * @property {HTMLDivElement} container - The container for the viewer element.
  * @property {HTMLDivElement} [viewer] - The viewer element.
  * @property {EventBus} eventBus - The application event bus.
- * @property {IPDFLinkService} [linkService] - The navigation/linking service.
- * @property {IDownloadManager} [downloadManager] - The download manager
+ * @property {PDFLinkService} [linkService] - The navigation/linking service.
+ * @property {BaseDownloadManager} [downloadManager] - The download manager
  *   component.
  * @property {PDFFindController} [findController] - The find controller
  *   component.
@@ -134,7 +135,7 @@ function isValidAnnotationEditorMode(mode) {
  *   rendering will keep track of which areas of the page each PDF operation
  *   affects. Then, when rendering a partial page (if `enableDetailCanvas` is
  *   enabled), it will only run through the operations that affect that portion.
- * @property {IL10n} [l10n] - Localization service.
+ * @property {L10n} [l10n] - Localization service.
  * @property {boolean} [enablePermissions] - Enables PDF document permissions,
  *   when they exist. The default value is `false`.
  * @property {Object} [pageColors] - Overwrites background and foreground colors
@@ -299,6 +300,7 @@ class PDFViewer {
         `The API version "${version}" does not match the Viewer version "${viewerVersion}".`
       );
     }
+
     this.container = options.container;
     this.viewer = options.viewer || options.container.firstElementChild;
     this.#viewerAlert = options.viewerAlert || null;
@@ -1171,6 +1173,42 @@ class PDFViewer {
       });
   }
 
+  async onBeforePagesEdited({ pagesMapper }) {
+    await this._pagesCapability.promise;
+    this._currentPageId = pagesMapper.getPageId(this._currentPageNumber);
+  }
+
+  onPagesEdited({ pagesMapper }) {
+    this._currentPageNumber = pagesMapper.getPageNumber(this._currentPageId);
+    const prevPages = this._pages;
+    const newPages = (this._pages = []);
+    for (let i = 0, ii = pagesMapper.pagesNumber; i < ii; i++) {
+      const prevPageNumber = pagesMapper.getPrevPageNumber(i + 1) - 1;
+      if (prevPageNumber === -1) {
+        continue;
+      }
+      const page = prevPages[prevPageNumber];
+      newPages[i] = page;
+      page.updatePageNumber(i + 1);
+    }
+
+    const viewerElement =
+      this._scrollMode === ScrollMode.PAGE ? null : this.viewer;
+    if (viewerElement) {
+      viewerElement.replaceChildren();
+      const fragment = document.createDocumentFragment();
+      for (let i = 0, ii = pagesMapper.pagesNumber; i < ii; i++) {
+        const { div } = newPages[i];
+        div.setAttribute("data-page-number", i + 1);
+        fragment.append(div);
+      }
+      viewerElement.append(fragment);
+    }
+    setTimeout(() => {
+      this.forceRendering();
+    });
+  }
+
   /**
    * @param {Array|null} labels
    */
@@ -1780,20 +1818,20 @@ class PDFViewer {
       this._spreadMode === SpreadMode.NONE &&
       (this._scrollMode === ScrollMode.PAGE ||
         this._scrollMode === ScrollMode.VERTICAL);
-    const currentId = this._currentPageNumber;
+    const currentPageNumber = this._currentPageNumber;
     let stillFullyVisible = false;
 
     for (const page of visiblePages) {
       if (page.percent < 100) {
         break;
       }
-      if (page.id === currentId && isSimpleLayout) {
+      if (page.id === currentPageNumber && isSimpleLayout) {
         stillFullyVisible = true;
         break;
       }
     }
     this._setCurrentPageNumber(
-      stillFullyVisible ? currentId : visiblePages[0].id
+      stillFullyVisible ? this._currentPageNumber : visiblePages[0].id
     );
 
     this._updateLocation(visible.first);
@@ -2501,6 +2539,7 @@ class PDFViewer {
       await this.#annotationEditorUIManager.updateMode(
         mode,
         editId,
+        /* isFromUser = */ true,
         isFromKeyboard,
         mustEnterInEditMode,
         editComment

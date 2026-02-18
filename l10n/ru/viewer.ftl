@@ -44,10 +44,10 @@ pdfjs-save-button =
 pdfjs-save-button-label = Сохранить
 # Used in Firefox for Android as a tooltip for the download button (“download” is a verb).
 pdfjs-download-button =
-    .title = Загрузить
+    .title = Скачать
 # Used in Firefox for Android as a label for the download button (“download” is a verb).
 # Length of the translation matters since we are in a mobile context, with limited screen estate.
-pdfjs-download-button-label = Загрузить
+pdfjs-download-button-label = Скачать
 pdfjs-bookmark-button =
     .title = Текущая страница (просмотр URL-адреса с текущей страницы)
 pdfjs-bookmark-button-label = Текущая страница
@@ -70,10 +70,10 @@ pdfjs-page-rotate-ccw-button =
     .title = Повернуть против часовой стрелки
 pdfjs-page-rotate-ccw-button-label = Повернуть против часовой стрелки
 pdfjs-cursor-text-select-tool-button =
-    .title = Включить Инструмент «Выделение текста»
+    .title = Включить инструмент «Выделение текста»
 pdfjs-cursor-text-select-tool-button-label = Инструмент «Выделение текста»
 pdfjs-cursor-hand-tool-button =
-    .title = Включить Инструмент «Рука»
+    .title = Включить инструмент «Рука»
 pdfjs-cursor-hand-tool-button-label = Инструмент «Рука»
 pdfjs-scroll-page-button =
     .title = Использовать прокрутку страниц
@@ -363,7 +363,7 @@ pdfjs-editor-free-highlight-thickness-input = Толщина
 pdfjs-editor-free-highlight-thickness-title =
     .title = Изменить толщину при выделении элементов, кроме текста
 pdfjs-editor-add-signature-container =
-    .aria-label = Управление подписями и сохраненные подписи
+    .aria-label = Управление подписями и сохранённые подписи
 pdfjs-editor-signature-add-signature-button =
     .title = Добавить новую подпись
 pdfjs-editor-signature-add-signature-button-label = Добавить новую подпись
@@ -515,7 +515,7 @@ pdfjs-editor-alt-text-settings-create-model-description = Предлагает �
 pdfjs-editor-alt-text-settings-download-model-label = ИИ-модель альтернативного текста ({ $totalSize } МБ)
 pdfjs-editor-alt-text-settings-ai-model-description = Запускается локально на вашем устройстве, поэтому ваши данные остаются конфиденциальными. Требуется для автоматического альтернативного текста.
 pdfjs-editor-alt-text-settings-delete-model-button = Удалить
-pdfjs-editor-alt-text-settings-download-model-button = Загрузить
+pdfjs-editor-alt-text-settings-download-model-button = Скачать
 pdfjs-editor-alt-text-settings-downloading-model-button = Загрузка…
 pdfjs-editor-alt-text-settings-editor-title = Редактор альтернативного текста
 pdfjs-editor-alt-text-settings-show-dialog-button-label = Сразу показывать редактор альтернативного текста при добавлении изображения
@@ -537,6 +537,7 @@ pdfjs-editor-undo-bar-message-freetext = Текст удалён
 pdfjs-editor-undo-bar-message-ink = Рисунок удалён
 pdfjs-editor-undo-bar-message-stamp = Изображение удалено
 pdfjs-editor-undo-bar-message-signature = Подпись удалена
+pdfjs-editor-undo-bar-message-comment = Комментарий удалён
 # Variables:
 #   $count (Number) - the number of removed annotations.
 pdfjs-editor-undo-bar-message-multiple =
@@ -622,18 +623,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Действия
-pdfjs-editor-edit-comment-actions-button =
-    .title = Действия
-pdfjs-editor-edit-comment-close-button-label = Закрыть
-pdfjs-editor-edit-comment-close-button =
-    .title = Закрыть
-pdfjs-editor-edit-comment-actions-edit-button-label = Изменить
-pdfjs-editor-edit-comment-actions-delete-button-label = Удалить
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Введите ваш комментарий
-pdfjs-editor-edit-comment-manager-cancel-button = Отмена
-pdfjs-editor-edit-comment-manager-save-button = Сохранить
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Редактировать комментарий
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Обновить
@@ -646,8 +635,85 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Отмена
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Редактировать комментарий
+pdfjs-editor-add-comment-button =
+    .title = Добавить комментарий
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Показать/скрыть боковую панель
+pdfjs-toggle-views-manager-notification-button =
+    .title = Показать/скрыть боковую панель (документ содержит миниатюры/структуру/вложения/слои)
+pdfjs-toggle-views-manager-button-label = Показать/скрыть боковую панель
+pdfjs-views-manager-sidebar =
+    .aria-label = Боковая панель
+pdfjs-views-manager-view-selector-button =
+    .title = Вид
+pdfjs-views-manager-view-selector-button-label = Вид
+pdfjs-views-manager-pages-title = Страницы
+pdfjs-views-manager-outlines-title = Структура документа
+pdfjs-views-manager-attachments-title = Вложения
+pdfjs-views-manager-layers-title = Слои
+pdfjs-views-manager-pages-option-label = Страницы
+pdfjs-views-manager-outlines-option-label = Структура документа
+pdfjs-views-manager-attachments-option-label = Вложения
+pdfjs-views-manager-layers-option-label = Слои
+pdfjs-views-manager-add-file-button =
+    .title = Добавить файл
+pdfjs-views-manager-add-file-button-label = Добавить файл
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] Выбрана { $count }
+        [few] Выбраны { $count }
+       *[many] Выбрано { $count }
+    }
+pdfjs-views-manager-pages-status-none-action-label = Выбрать страницы
+pdfjs-views-manager-pages-status-action-button-label = Управление
+pdfjs-views-manager-pages-status-copy-button-label = Копировать
+pdfjs-views-manager-pages-status-cut-button-label = Вырезать
+pdfjs-views-manager-pages-status-delete-button-label = Удалить
+pdfjs-views-manager-pages-status-save-as-button-label = Сохранить как…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] Вырезана 1 страница
+        [few] Вырезаны { $count } страницы
+       *[many] Вырезано { $count } страниц
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] Скопирована 1 страница
+        [few] Скопированы { $count } страницы
+       *[many] Скопировано { $count } страниц
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] Удалена 1 страница
+        [few] Удалены { $count } страницы
+       *[many] Удалено { $count } страниц
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Идёт подготовка файла…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Выгрузка файла…
+pdfjs-views-manager-status-warning-cut-label = Не удалось вырезать. Обновить страницу и попробовать ещё раз.
+pdfjs-views-manager-status-warning-copy-label = Не удалось скопировать. Обновить страницу и попробовать ещё раз.
+pdfjs-views-manager-status-warning-delete-label = Не удалось удалить. Обновить страницу и попробовать ещё раз.
+pdfjs-views-manager-status-warning-save-label = Не удалось сохранить. Обновить страницу и попробовать ещё раз.
+pdfjs-views-manager-status-undo-button-label = Отменить
+pdfjs-views-manager-status-close-button =
+    .title = Закрыть
+pdfjs-views-manager-status-close-button-label = Закрыть
 
 ## Main menu for adding/removing signatures
 

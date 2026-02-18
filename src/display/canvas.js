@@ -667,8 +667,6 @@ class CanvasGraphics {
     this.stateStack = [];
     this.pendingClip = null;
     this.pendingEOFill = false;
-    this.res = null;
-    this.xobjs = null;
     this.commonObjs = commonObjs;
     this.objs = objs;
     this.canvasFactory = canvasFactory;
@@ -2062,7 +2060,20 @@ class CanvasGraphics {
     }
 
     let patternFillTransform, patternStrokeTransform;
-    if (current.patternFill) {
+
+    // Only compute pattern transforms if the text rendering mode actually
+    // uses fill/stroke. This avoids expensive pattern calculations each call
+    // when a patternFill/patternStroke is set, but unused.
+    const fillStrokeMode =
+      current.textRenderingMode & TextRenderingMode.FILL_STROKE_MASK;
+    const needsFill =
+      fillStrokeMode === TextRenderingMode.FILL ||
+      fillStrokeMode === TextRenderingMode.FILL_STROKE;
+    const needsStroke =
+      fillStrokeMode === TextRenderingMode.STROKE ||
+      fillStrokeMode === TextRenderingMode.FILL_STROKE;
+
+    if (needsFill && current.patternFill) {
       ctx.save();
       const pattern = current.fillColor.getPattern(
         ctx,
@@ -2076,7 +2087,7 @@ class CanvasGraphics {
       ctx.fillStyle = pattern;
     }
 
-    if (current.patternStroke) {
+    if (needsStroke && current.patternStroke) {
       ctx.save();
       const pattern = current.strokeColor.getPattern(
         ctx,
@@ -2093,12 +2104,7 @@ class CanvasGraphics {
     let lineWidth = current.lineWidth;
     const scale = current.textMatrixScale;
     if (scale === 0 || lineWidth === 0) {
-      const fillStrokeMode =
-        current.textRenderingMode & TextRenderingMode.FILL_STROKE_MASK;
-      if (
-        fillStrokeMode === TextRenderingMode.STROKE ||
-        fillStrokeMode === TextRenderingMode.FILL_STROKE
-      ) {
+      if (needsStroke) {
         lineWidth = this.getSinglePixelWidth();
       }
     } else {

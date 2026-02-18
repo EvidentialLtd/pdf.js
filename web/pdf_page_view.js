@@ -18,11 +18,10 @@
 // eslint-disable-next-line max-len
 /** @typedef {import("../src/display/optional_content_config").OptionalContentConfig} OptionalContentConfig */
 /** @typedef {import("./event_utils").EventBus} EventBus */
-/** @typedef {import("./interfaces").IL10n} IL10n */
-/** @typedef {import("./interfaces").IRenderableView} IRenderableView */
 // eslint-disable-next-line max-len
 /** @typedef {import("./pdf_rendering_queue").PDFRenderingQueue} PDFRenderingQueue */
 /** @typedef {import("./comment_manager.js").CommentManager} CommentManager */
+/** @typedef {import("./l10n.js").L10n} L10n */
 
 import {
   AbortException,
@@ -37,7 +36,6 @@ import {
   calcRound,
   DEFAULT_SCALE,
   floorToDivide,
-  RenderingStates,
   TextLayerMode,
 } from "./ui_utils.js";
 import { AnnotationEditorLayerBuilder } from "./annotation_editor_layer_builder.js";
@@ -48,6 +46,7 @@ import { BasePDFPageView } from "./base_pdf_page_view.js";
 import { DrawLayerBuilder } from "./draw_layer_builder.js";
 import { GenericL10n } from "web-null_l10n";
 import { PDFPageDetailView } from "./pdf_page_detail_view.js";
+import { RenderingStates } from "./renderable_view.js";
 import { SimpleLinkService } from "./pdf_link_service.js";
 import { StructTreeLayerBuilder } from "./struct_tree_layer_builder.js";
 import { TextAccessibilityManager } from "./text_accessibility.js";
@@ -98,7 +97,7 @@ import { XfaLayerBuilder } from "./xfa_layer_builder.js";
  * @property {Object} [pageColors] - Overwrites background and foreground colors
  *   with user defined ones in order to improve readability in high contrast
  *   mode.
- * @property {IL10n} [l10n] - Localization service.
+ * @property {L10n} [l10n] - Localization service.
  * @property {Object} [layerProperties] - The object that is used to lookup
  *   the necessary layer-properties.
  * @property {boolean} [enableAutoLinking] - Enable creation of hyperlinks from
@@ -130,9 +129,6 @@ const LAYERS_ORDER = new Map([
   ["xfaLayer", 3],
 ]);
 
-/**
- * @implements {IRenderableView}
- */
 class PDFPageView extends BasePDFPageView {
   #annotationMode = AnnotationMode.ENABLE_FORMS;
 
@@ -176,8 +172,7 @@ class PDFPageView extends BasePDFPageView {
   constructor(options) {
     super(options);
 
-    const container = options.container;
-    const defaultViewport = options.defaultViewport;
+    const { container, defaultViewport } = options;
 
     this.renderingId = "page" + this.id;
     this.#layerProperties = options.layerProperties || DEFAULT_LAYER_PROPERTIES;
@@ -317,6 +312,25 @@ class PDFPageView extends BasePDFPageView {
       /* mustFlip = */ true,
       /* mustRotate = */ false
     );
+  }
+
+  updatePageNumber(newPageNumber) {
+    if (this.id === newPageNumber) {
+      return;
+    }
+    this.id = newPageNumber;
+    this.renderingId = `page${newPageNumber}`;
+    if (this.pdfPage) {
+      this.pdfPage.pageNumber = newPageNumber;
+    }
+    // TODO: do we set the page label ?
+    this.setPageLabel(this.pageLabel);
+    const { div } = this;
+    div.setAttribute("data-page-number", newPageNumber);
+    div.setAttribute("data-l10n-args", JSON.stringify({ page: newPageNumber }));
+    this._textHighlighter.pageIdx = newPageNumber - 1;
+    // Don't update the page index for the draw layer, since it's just used as
+    // an identifier.
   }
 
   setPdfPage(pdfPage) {
@@ -493,7 +507,7 @@ class PDFPageView extends BasePDFPageView {
     const treeDom = await this.structTreeLayer?.render();
     if (treeDom) {
       this.l10n.pause();
-      this.structTreeLayer?.addElementsToTextLayer();
+      this.structTreeLayer?.updateTextLayer();
       if (this.canvas && treeDom.parentNode !== this.canvas) {
         // Pause translation when inserting the structTree in the DOM.
         this.canvas.append(treeDom);
@@ -1116,9 +1130,7 @@ class PDFPageView extends BasePDFPageView {
       if (!annotationEditorUIManager) {
         return;
       }
-      this.drawLayer ||= new DrawLayerBuilder({
-        pageIndex: this.id,
-      });
+      this.drawLayer ||= new DrawLayerBuilder();
       await this.#renderDrawLayer();
       this.drawLayer.setParent(canvasWrapper);
 

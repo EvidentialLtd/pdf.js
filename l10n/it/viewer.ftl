@@ -290,10 +290,10 @@ pdfjs-editor-color-picker-free-text-input =
     .title = Cambia colore del testo
 pdfjs-editor-free-text-button-label = Testo
 pdfjs-editor-ink-button =
-    .title = Disegno
+    .title = Disegna
 pdfjs-editor-color-picker-ink-input =
     .title = Cambia colore del disegno
-pdfjs-editor-ink-button-label = Disegno
+pdfjs-editor-ink-button-label = Disegna
 pdfjs-editor-stamp-button =
     .title = Aggiungi o rimuovi immagine
 pdfjs-editor-stamp-button-label = Aggiungi o rimuovi immagine
@@ -534,6 +534,7 @@ pdfjs-editor-undo-bar-message-freetext = Testo rimosso
 pdfjs-editor-undo-bar-message-ink = Disegno rimosso
 pdfjs-editor-undo-bar-message-stamp = Immagine rimossa
 pdfjs-editor-undo-bar-message-signature = Firma rimossa
+pdfjs-editor-undo-bar-message-comment = Commento rimosso
 # Variables:
 #   $count (Number) - the number of removed annotations.
 pdfjs-editor-undo-bar-message-multiple =
@@ -618,18 +619,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Azioni
-pdfjs-editor-edit-comment-actions-button =
-    .title = Azioni
-pdfjs-editor-edit-comment-close-button-label = Chiudi
-pdfjs-editor-edit-comment-close-button =
-    .title = Chiudi
-pdfjs-editor-edit-comment-actions-edit-button-label = Modifica
-pdfjs-editor-edit-comment-actions-delete-button-label = Elimina
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Inserisci il tuo commento
-pdfjs-editor-edit-comment-manager-cancel-button = Annulla
-pdfjs-editor-edit-comment-manager-save-button = Salva
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Modifica commento
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Aggiorna
@@ -642,8 +631,81 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Annulla
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Modifica commento
+pdfjs-editor-add-comment-button =
+    .title = Aggiungi commento
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-toggle-views-manager-button =
+    .title = Attiva/disattiva barra laterale
+pdfjs-toggle-views-manager-notification-button =
+    .title = Attiva/disattiva barra laterale (il documento contiene miniature, struttura, allegati, livelli)
+pdfjs-toggle-views-manager-button-label = Attiva/disattiva barra laterale
+pdfjs-views-manager-sidebar =
+    .aria-label = Barra laterale
+pdfjs-views-manager-view-selector-button =
+    .title = Viste
+pdfjs-views-manager-view-selector-button-label = Viste
+pdfjs-views-manager-pages-title = Pagine
+pdfjs-views-manager-outlines-title = Struttura del documento
+pdfjs-views-manager-attachments-title = Allegati
+pdfjs-views-manager-layers-title = Livelli
+pdfjs-views-manager-pages-option-label = Pagine
+pdfjs-views-manager-outlines-option-label = Struttura del documento
+pdfjs-views-manager-attachments-option-label = Allegati
+pdfjs-views-manager-layers-option-label = Livelli
+pdfjs-views-manager-add-file-button =
+    .title = Aggiungi file
+pdfjs-views-manager-add-file-button-label = Aggiungi file
+# Variables:
+#   $count (Number) - the number of selected pages.
+pdfjs-views-manager-pages-status-action-label =
+    { $count ->
+        [one] { $count } selezionata
+       *[other] { $count } selezionate
+    }
+pdfjs-views-manager-pages-status-none-action-label = Seleziona pagine
+pdfjs-views-manager-pages-status-action-button-label = Gestisci
+pdfjs-views-manager-pages-status-copy-button-label = Copia
+pdfjs-views-manager-pages-status-cut-button-label = Taglia
+pdfjs-views-manager-pages-status-delete-button-label = Elimina
+pdfjs-views-manager-pages-status-save-as-button-label = Salva con nome…
+# Variables:
+#   $count (Number) - the number of selected pages to be cut.
+pdfjs-views-manager-status-undo-cut-label =
+    { $count ->
+        [one] { $count } pagina tagliata
+       *[other] { $count } pagine tagliate
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be copied.
+pdfjs-views-manager-pages-status-undo-copy-label =
+    { $count ->
+        [one] { $count } pagina copiata
+       *[other] { $count } pagine copiate
+    }
+# Variables:
+#   $count (Number) - the number of selected pages to be deleted.
+pdfjs-views-manager-pages-status-undo-delete-label =
+    { $count ->
+        [one] { $count } pagina eliminata
+       *[other] { $count } pagine eliminate
+    }
+pdfjs-views-manager-pages-status-waiting-ready-label = Preparazione file…
+pdfjs-views-manager-pages-status-waiting-uploading-label = Caricamento file…
+pdfjs-views-manager-status-warning-cut-label = Taglio non riuscito. Ricarica la pagina e riprova.
+pdfjs-views-manager-status-warning-copy-label = Copia non riuscita. Ricarica la pagina e riprova.
+pdfjs-views-manager-status-warning-delete-label = Eliminazione non riuscita. Ricarica la pagina e riprova.
+pdfjs-views-manager-status-warning-save-label = Salvataggio non riuscito. Ricarica la pagina e prova di nuovo.
+pdfjs-views-manager-status-undo-button-label = Annulla
+pdfjs-views-manager-status-close-button =
+    .title = Chiudi
+pdfjs-views-manager-status-close-button-label = Chiudi
 
 ## Main menu for adding/removing signatures
 
@@ -658,3 +720,4 @@ pdfjs-editor-add-signature-edit-button-label = Modifica descrizione
 ## Edit signature description dialog
 
 pdfjs-editor-edit-signature-dialog-title = Modifica descrizione
+

@@ -622,18 +622,6 @@ pdfjs-show-comment-button =
 
 ##  Edit a comment dialog
 
-pdfjs-editor-edit-comment-actions-button-label = Дзеянні
-pdfjs-editor-edit-comment-actions-button =
-    .title = Дзеянні
-pdfjs-editor-edit-comment-close-button-label = Закрыць
-pdfjs-editor-edit-comment-close-button =
-    .title = Закрыць
-pdfjs-editor-edit-comment-actions-edit-button-label = Праўка
-pdfjs-editor-edit-comment-actions-delete-button-label = Выдаліць
-pdfjs-editor-edit-comment-manager-text-input =
-    .placeholder = Увядзіце свой каментарый
-pdfjs-editor-edit-comment-manager-cancel-button = Скасаваць
-pdfjs-editor-edit-comment-manager-save-button = Захаваць
 # An existing comment is edited
 pdfjs-editor-edit-comment-dialog-title-when-editing = Змяніць каментарый
 pdfjs-editor-edit-comment-dialog-save-button-when-editing = Абнавіць
@@ -646,8 +634,31 @@ pdfjs-editor-edit-comment-dialog-cancel-button = Скасаваць
 
 ## Edit a comment button in the editor toolbar
 
-pdfjs-editor-edit-comment-button =
-    .title = Змяніць каментарый
+pdfjs-editor-add-comment-button =
+    .title = Дадаць каментарый
+
+## The view manager is a sidebar displaying different views:
+##  - thumbnails;
+##  - outline;
+##  - attachments;
+##  - layers.
+## The thumbnails view is used to edit the pdf: remove/insert pages, ...
+
+pdfjs-views-manager-pages-title = Старонкі
+pdfjs-views-manager-pages-option-label = Старонкі
+pdfjs-views-manager-add-file-button =
+    .title = Дадаць файл
+pdfjs-views-manager-add-file-button-label = Дадаць файл
+pdfjs-views-manager-pages-status-none-action-label = Выбраць старонкі
+pdfjs-views-manager-pages-status-action-button-label = Кіраваць
+pdfjs-views-manager-pages-status-copy-button-label = Капіяваць
+pdfjs-views-manager-pages-status-cut-button-label = Выразаць
+pdfjs-views-manager-pages-status-delete-button-label = Выдаліць
+pdfjs-views-manager-pages-status-save-as-button-label = Захаваць як…
+pdfjs-views-manager-status-undo-button-label = Адмяніць
+pdfjs-views-manager-status-close-button =
+    .title = Закрыць
+pdfjs-views-manager-status-close-button-label = Закрыць
 
 ## Main menu for adding/removing signatures
 

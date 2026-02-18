@@ -43,6 +43,87 @@ function bindEvents(obj, element, names) {
 }
 
 /**
+ * Class to store current pointers used by the editor to be able to handle
+ * multiple pointers (e.g. two fingers, a pen, a mouse, ...).
+ */
+class CurrentPointers {
+  // To manage the pointer events.
+
+  // The pointerId  and pointerIds are used to keep track of
+  // the pointers with a same type (e.g. two fingers).
+  static #pointerId = NaN;
+
+  static #pointerIds = null;
+
+  // Track the timestamp to know if the touchmove event is used.
+  static #moveTimestamp = NaN;
+
+  // The pointerType is used to know if we are using a mouse, a pen or a touch.
+  static #pointerType = null;
+
+  static initializeAndAddPointerId(pointerId) {
+    // Store pointer ids. For example, the user is using a second finger.
+    (CurrentPointers.#pointerIds ||= new Set()).add(pointerId);
+  }
+
+  static setPointer(pointerType, pointerId) {
+    CurrentPointers.#pointerId ||= pointerId;
+    CurrentPointers.#pointerType ??= pointerType;
+  }
+
+  static setTimeStamp(timeStamp) {
+    CurrentPointers.#moveTimestamp = timeStamp;
+  }
+
+  static isSamePointerId(pointerId) {
+    return CurrentPointers.#pointerId === pointerId;
+  }
+
+  // Check if it's the same pointer id, otherwise remove it from the set.
+  static isSamePointerIdOrRemove(pointerId) {
+    if (CurrentPointers.#pointerId === pointerId) {
+      return true;
+    }
+
+    CurrentPointers.#pointerIds?.delete(pointerId);
+    return false;
+  }
+
+  static isSamePointerType(pointerType) {
+    return CurrentPointers.#pointerType === pointerType;
+  }
+
+  static isInitializedAndDifferentPointerType(pointerType) {
+    return (
+      CurrentPointers.#pointerType !== null &&
+      !CurrentPointers.isSamePointerType(pointerType)
+    );
+  }
+
+  static isSameTimeStamp(timeStamp) {
+    return CurrentPointers.#moveTimestamp === timeStamp;
+  }
+
+  static isUsingMultiplePointers() {
+    // Check if the user is using multiple fingers
+    return CurrentPointers.#pointerIds?.size >= 1;
+  }
+
+  static clearPointerType() {
+    CurrentPointers.#pointerType = null;
+  }
+
+  static clearPointerIds() {
+    CurrentPointers.#pointerId = NaN;
+    CurrentPointers.#pointerIds = null;
+  }
+
+  static clearTimeStamp() {
+    CurrentPointers.#moveTimestamp = NaN;
+  }
+}
+
+/**
  * Class to create some unique ids for the different editors.
  */
 class IdManager {
@@ -867,6 +948,7 @@ class AnnotationEditorUIManager {
       evt => this.updateParams(evt.type, evt.value),
       { signal }
     );
+    eventBus._on("pagesedited", this.onPagesEdited.bind(this), { signal });
     window.addEventListener(
       "pointerdown",
       () => {
@@ -881,6 +963,10 @@ class AnnotationEditorUIManager {
       },
       { capture: true, signal }
     );
+    window.addEventListener("beforeunload", this.#beforeUnload.bind(this), {
+      capture: true,
+      signal,
+    });
     this.#addSelectionListener();
     this.#addDragAndDropListeners();
     this.#addKeyboardManager();
@@ -1096,6 +1182,23 @@ class AnnotationEditorUIManager {
     this.#commentManager?.removeComments([editor.uid]);
   }
 
+  /**
+   * Delete a comment from an editor with undo support.
+   * @param {AnnotationEditor} editor - The editor whose comment to delete.
+   * @param {Object} savedData - The comment data to save for undo.
+   */
+  deleteComment(editor, savedData) {
+    const undo = () => {
+      editor.comment = savedData;
+    };
+    const cmd = () => {
+      this._editorUndoBar?.show(undo, "comment");
+      this.toggleComment(/* editor = */ null);
+      editor.comment = null;
+    };
+    this.addCommands({ cmd, undo, mustExec: true });
+  }
+
   toggleComment(editor, isSelected, visibility = undefined) {
     this.#commentManager?.toggleCommentPopup(editor, isSelected, visibility);
   }
@@ -1158,6 +1261,26 @@ class AnnotationEditorUIManager {
       case "enableNewAltTextWhenAddingImage":
         this.#enableNewAltTextWhenAddingImage = value;
         break;
+    }
+  }
+
+  onPagesEdited({ pagesMapper }) {
+    for (const editor of this.#allEditors.values()) {
+      editor.updatePageIndex(
+        pagesMapper.getPrevPageNumber(editor.pageIndex + 1) - 1
+      );
+    }
+    const allLayers = this.#allLayers;
+    const newAllLayers = (this.#allLayers = new Map());
+    for (const [pageIndex, layer] of allLayers) {
+      const prevPageIndex = pagesMapper.getPrevPageNumber(pageIndex + 1) - 1;
+      if (prevPageIndex === -1) {
+        // TODO: handle the case where the deletion of the page has been undone.
+        layer.destroy();
+        continue;
+      }
+      newAllLayers.set(prevPageIndex, layer);
+      layer.updatePageIndex(prevPageIndex);
     }
   }
 
@@ -1277,6 +1400,11 @@ class AnnotationEditorUIManager {
 
   commentSelection(methodOfCreation = "") {
     this.highlightSelection(methodOfCreation, /* comment */ true);
+  }
+
+  #beforeUnload(e) {
+    this.commitOrRemove();
+    this.currentLayer?.endDrawingSession(/* isAborted = */ false);
   }
 
   #displayFloatingToolbar() {
@@ -1842,6 +1970,8 @@ class AnnotationEditorUIManager {
    * Change the editor mode (None, FreeText, Ink, ...)
    * @param {number} mode
    * @param {string|null} editId
+   * @param {boolean} [isFromUser] - true if the mode change is due to a
+   *   user action.
    * @param {boolean} [isFromKeyboard] - true if the mode change is due to a
    *   keyboard action.
    * @param {boolean} [mustEnterInEditMode] - true if the editor must enter in
@@ -1852,6 +1982,7 @@ class AnnotationEditorUIManager {
   async updateMode(
     mode,
     editId = null,
+    isFromUser = false,
     isFromKeyboard = false,
     mustEnterInEditMode = false,
     editComment = false
@@ -1897,6 +2028,11 @@ class AnnotationEditorUIManager {
 
     if (mode === AnnotationEditorType.SIGNATURE) {
       await this.#signatureManager?.loadSignatures();
+    }
+
+    if (isFromUser) {
+      // reinitialize the pointer type when the mode is changed by the user
+      CurrentPointers.clearPointerType();
     }
 
     this.setEditingState(true);
@@ -2801,5 +2937,6 @@ export {
   bindEvents,
   ColorManager,
   CommandManager,
+  CurrentPointers,
   KeyboardManager,
 };

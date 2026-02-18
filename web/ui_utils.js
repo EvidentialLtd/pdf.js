@@ -25,13 +25,6 @@ const MAX_AUTO_SCALE = 1.25;
 const SCROLLBAR_PADDING = 40;
 const VERTICAL_PADDING = 5;
 
-const RenderingStates = {
-  INITIAL: 0,
-  RUNNING: 1,
-  PAUSED: 2,
-  FINISHED: 3,
-};
-
 const PresentationModeState = {
   UNKNOWN: 0,
   NORMAL: 1,
@@ -709,7 +702,7 @@ class ProgressBar {
   }
 
   set percent(val) {
-    this.#percent = MathClamp(val, 0, 100);
+    this.#percent = val;
 
     if (isNaN(val)) {
       this.#classList.add("indeterminate");
@@ -850,6 +843,13 @@ function toggleCheckedBtn(button, toggle, view = null) {
   view?.classList.toggle("hidden", !toggle);
 }
 
+function toggleSelectedBtn(button, toggle, view = null) {
+  button.classList.toggle("selected", toggle);
+  button.setAttribute("aria-selected", toggle);
+
+  view?.classList.toggle("hidden", !toggle);
+}
+
 function toggleExpandedBtn(button, toggle, view = null) {
   button.classList.toggle("toggled", toggle);
   button.setAttribute("aria-expanded", toggle);
@@ -907,7 +907,6 @@ export {
   PresentationModeState,
   ProgressBar,
   removeNullCharacters,
-  RenderingStates,
   SCROLLBAR_PADDING,
   scrollIntoView,
   ScrollMode,
@@ -916,6 +915,7 @@ export {
   TextLayerMode,
   toggleCheckedBtn,
   toggleExpandedBtn,
+  toggleSelectedBtn,
   UNKNOWN_SCALE,
   VERTICAL_PADDING,
   watchScroll,

@@ -31,7 +31,11 @@ import {
 } from "../shared/util.js";
 import { CMapFactory, IdentityCMap } from "./cmap.js";
 import { Cmd, Dict, EOF, isName, Name, Ref, RefSet } from "./primitives.js";
-import { compileType3Glyph, FontFlags } from "./fonts_utils.js";
+import {
+  compileType3Glyph,
+  FontFlags,
+  normalizeFontName,
+} from "./fonts_utils.js";
 import { ErrorFont, Font } from "./fonts.js";
 import {
   fetchBinaryData,
@@ -40,7 +44,11 @@ import {
   lookupMatrix,
   lookupNormalRect,
 } from "./core_utils.js";
-import { FontInfo, PatternInfo } from "../shared/obj-bin-transform.js";
+import {
+  FontInfo,
+  FontPathInfo,
+  PatternInfo,
+} from "../shared/obj-bin-transform.js";
 import {
   getEncoding,
   MacRomanEncoding,
@@ -1035,6 +1043,7 @@ class PartialEvaluator {
       if (
         isAddToPathSet ||
         state.fillColorSpace.name === "Pattern" ||
+        state.strokeColorSpace.name === "Pattern" ||
         font.disableFontFace
       ) {
         PartialEvaluator.buildFontPaths(
@@ -1701,7 +1710,7 @@ class PartialEvaluator {
     return null;
   }
 
-  getOperatorList({
+  async getOperatorList({
     stream,
     task,
     resources,
@@ -1710,6 +1719,13 @@ class PartialEvaluator {
     fallbackFontDict = null,
     prevRefs = null,
   }) {
+    if (stream.isAsync) {
+      const bytes = await stream.asyncGetBytes();
+      if (bytes) {
+        stream = new Stream(bytes, 0, bytes.length, stream.dict);
+      }
+    }
+
     const objId = stream.dict?.objId;
     const seenRefs = new RefSet(prevRefs);
 
@@ -2368,7 +2384,7 @@ class PartialEvaluator {
     });
   }
 
-  getTextContent({
+  async getTextContent({
     stream,
     task,
     resources,
@@ -2384,6 +2400,13 @@ class PartialEvaluator {
     prevRefs = null,
     intersector = null,
   }) {
+    if (stream.isAsync) {
+      const bytes = await stream.asyncGetBytes();
+      if (bytes) {
+        stream = new Stream(bytes, 0, bytes.length, stream.dict);
+      }
+    }
+
     const objId = stream.dict?.objId;
     const seenRefs = new RefSet(prevRefs);
 
@@ -2519,7 +2542,7 @@ class PartialEvaluator {
 
     const preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
 
-    let textState;
+    let textState, currentTextState;
 
     function pushWhitespace({
       width = 0,
@@ -2781,7 +2804,9 @@ class PartialEvaluator {
 
         // When the total height of the current chunk is negative
         // then we're writing from bottom to top.
-        const textOrientation = Math.sign(textContentItem.height);
+        const textOrientation = Math.sign(
+          textContentItem.height || textContentItem.totalHeight
+        );
         if (advanceY < textOrientation * textContentItem.negativeSpaceMax) {
           if (
             Math.abs(advanceX) >
@@ -2845,7 +2870,9 @@ class PartialEvaluator {
 
       // When the total width of the current chunk is negative
       // then we're writing from right to left.
-      const textOrientation = Math.sign(textContentItem.width);
+      const textOrientation = Math.sign(
+        textContentItem.width || textContentItem.totalWidth
+      );
       if (advanceX < textOrientation * textContentItem.negativeSpaceMax) {
         if (
           Math.abs(advanceY) >
@@ -2903,6 +2930,15 @@ class PartialEvaluator {
     }
 
     function buildTextContentItem({ chars, extraSpacing }) {
+      if (
+        currentTextState !== textState &&
+        (currentTextState.fontName !== textState.fontName ||
+          currentTextState.fontSize !== textState.fontSize)
+      ) {
+        flushTextContentItem();
+        currentTextState = textState.clone();
+      }
+
       const font = textState.font;
       if (!chars) {
         // Just move according to the space we have.
@@ -3158,8 +3194,8 @@ class PartialEvaluator {
           break;
         }
 
-        const previousState = textState;
         textState = stateManager.state;
+        currentTextState ||= textState.clone();
         const fn = operation.fn;
         args = operation.args;
 
@@ -3176,7 +3212,6 @@ class PartialEvaluator {
               break;
             }
 
-            flushTextContentItem();
             textState.fontName = fontNameArg;
             textState.fontSize = fontSizeArg;
             next(handleSetFont(fontNameArg, null));
@@ -3533,14 +3568,10 @@ class PartialEvaluator {
             }
             break;
           case OPS.restore:
-            if (
-              previousState &&
-              (previousState.font !== textState.font ||
-                previousState.fontSize !== textState.fontSize ||
-                previousState.fontName !== textState.fontName)
-            ) {
-              flushTextContentItem();
-            }
+            stateManager.restore();
+            break;
+          case OPS.save:
+            stateManager.save();
             break;
         } // switch
         if (textContent.items.length >= (sink?.desiredSize ?? 1)) {
@@ -3584,7 +3615,7 @@ class PartialEvaluator {
     if (properties.composite) {
       // CIDSystemInfo helps to match CID to glyphs
       const cidSystemInfo = dict.get("CIDSystemInfo");
-      if (cidSystemInfo instanceof Dict) {
+      if (cidSystemInfo instanceof Dict && !properties.cidSystemInfo) {
         properties.cidSystemInfo = {
           registry: stringToPDFString(cidSystemInfo.get("Registry")),
           ordering: stringToPDFString(cidSystemInfo.get("Ordering")),
@@ -3664,6 +3695,51 @@ class PartialEvaluator {
     // symbol fonts (fixes issue16464.pdf).
     if (baseEncodingName && nonEmbeddedFont && isSymbolsFontName) {
       baseEncodingName = null;
+    }
+
+    // Ignore incorrectly specified WinAnsiEncoding for non-embedded CJK fonts
+    // (fixes issue20489). Some chinese fonts often have WinAnsiEncoding in the
+    // PDF even though they should use Identity-H or GB-EUC-H encoding.
+    if (
+      baseEncodingName === "WinAnsiEncoding" &&
+      nonEmbeddedFont &&
+      properties.name?.charCodeAt(0) >= 0xb7
+    ) {
+      const fontName = properties.name;
+      // This list is built from some names from Pdfium and mupdf:
+      //  - https://pdfium.googlesource.com/pdfium/+/master/core/fpdfapi/font/cpdf_font.cpp#41
+      //  - https://fossies.org/linux/mupdf/source/pdf/pdf-font.c#l_820
+      const chineseFontNames = [
+        "\xCB\xCE\xCC\xE5", // SimSun
+        "\xBA\xDA\xCC\xE5", // SimHei
+        "\xBF\xAC\xCC\xE5", // SimKai
+        "\xB7\xC2\xCB\xCE", // SimFang
+        "\xBF\xAC\xCC\xE5_GB2312", // SimKai
+        "\xB7\xC2\xCB\xCE_GB2312", // SimFang
+        "\xC1\xA5\xCA\xE9", // SimLi
+        "\xD0\xC2\xCB\xCE", // SimSun
+      ];
+
+      // Check for common Chinese font names and their GBK-encoded equivalents
+      // (which may appear as Latin-1 when incorrectly decoded).
+      if (chineseFontNames.includes(fontName)) {
+        baseEncodingName = null;
+        properties.defaultEncoding = "Adobe-GB1-UCS2";
+        properties.composite = true;
+        properties.cidEncoding = Name.get("GBK-EUC-H");
+        const cMap = await CMapFactory.create({
+          encoding: properties.cidEncoding,
+          fetchBuiltInCMap: this._fetchBuiltInCMapBound,
+          useCMap: null,
+        });
+        properties.cMap = cMap;
+        properties.vertical = properties.cMap.vertical;
+        properties.cidSystemInfo = {
+          registry: "Adobe",
+          ordering: "GB1",
+          supplement: 0,
+        };
+      }
     }
 
     if (baseEncodingName) {
@@ -4166,16 +4242,17 @@ class PartialEvaluator {
     let defaultWidth = 0;
     let widths = Object.create(null);
     let monospace = false;
+
+    let fontName = normalizeFontName(name);
     const stdFontMap = getStdFontMap();
-    let lookupName = stdFontMap[name] || name;
+    fontName = stdFontMap[fontName] || fontName;
     const Metrics = getMetrics();
 
-    if (!(lookupName in Metrics)) {
+    const glyphWidths =
+      Metrics[fontName] ??
       // Use default fonts for looking up font metrics if the passed
       // font is not a base font
-      lookupName = this.isSerifFont(name) ? "Times-Roman" : "Helvetica";
-    }
-    const glyphWidths = Metrics[lookupName];
+      Metrics[this.isSerifFont(name) ? "Times-Roman" : "Helvetica"];
 
     if (typeof glyphWidths === "number") {
       defaultWidth = glyphWidths;
@@ -4386,7 +4463,7 @@ class PartialEvaluator {
         }
 
         // Using base font name as a font name.
-        baseFontName = baseFontName.name.replaceAll(/[,_]/g, "-");
+        baseFontName = normalizeFontName(baseFontName.name);
         const metrics = this.getBaseFontMetrics(baseFontName);
 
         // Simulating descriptor flags attribute
@@ -4515,8 +4592,16 @@ class PartialEvaluator {
       if (fontFile) {
         if (!(fontFile instanceof BaseStream)) {
           throw new FormatError("FontFile should be a stream");
-        } else if (fontFile.isEmpty) {
-          throw new FormatError("FontFile is empty");
+        } else {
+          if (fontFile.isAsync) {
+            const bytes = await fontFile.asyncGetBytes();
+            if (bytes) {
+              fontFile = new Stream(bytes, 0, bytes.length, fontFile.dict);
+            }
+          }
+          if (fontFile.isEmpty) {
+            throw new FormatError("FontFile is empty");
+          }
         }
       }
     } catch (ex) {
@@ -4663,11 +4748,8 @@ class PartialEvaluator {
         if (font.renderer.hasBuiltPath(fontChar)) {
           return;
         }
-        handler.send("commonobj", [
-          glyphName,
-          "FontPath",
-          font.renderer.getPathJs(fontChar),
-        ]);
+        const buffer = FontPathInfo.write(font.renderer.getPathJs(fontChar));
+        handler.send("commonobj", [glyphName, "FontPath", buffer], [buffer]);
       } catch (reason) {
         if (evaluatorOptions.ignoreErrors) {
           warn(`buildFontPaths - ignoring ${glyphName} glyph: "${reason}".`);
@@ -5014,7 +5096,7 @@ class TextState {
   }
 
   clone() {
-    const clone = Object.create(this);
+    const clone = Object.assign(Object.create(this), this);
     clone.textMatrix = this.textMatrix.slice();
     clone.textLineMatrix = this.textLineMatrix.slice();
     clone.fontMatrix = this.fontMatrix.slice();

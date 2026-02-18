@@ -17,7 +17,9 @@ import {
   BaseException,
   DrawOPS,
   FeatureTest,
+  MathClamp,
   shadow,
+  stripPath,
   Util,
   warn,
 } from "../shared/util.js";
@@ -43,10 +45,10 @@ async function fetchData(url, type = "text") {
       throw new Error(response.statusText);
     }
     switch (type) {
-      case "arraybuffer":
-        return response.arrayBuffer();
       case "blob":
         return response.blob();
+      case "bytes":
+        return response.bytes();
       case "json":
         return response.json();
     }
@@ -57,7 +59,7 @@ async function fetchData(url, type = "text") {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("GET", url, /* async = */ true);
-    request.responseType = type;
+    request.responseType = type === "bytes" ? "arraybuffer" : type;
 
     request.onreadystatechange = () => {
       if (request.readyState !== XMLHttpRequest.DONE) {
@@ -65,7 +67,9 @@ async function fetchData(url, type = "text") {
       }
       if (request.status === 200 || request.status === 0) {
         switch (type) {
-          case "arraybuffer":
+          case "bytes":
+            resolve(new Uint8Array(request.response));
+            return;
           case "blob":
           case "json":
             resolve(request.response);
@@ -322,7 +326,7 @@ function isPdfFile(filename) {
  */
 function getFilenameFromUrl(url) {
   [url] = url.split(/[#?]/, 1);
-  return url.substring(url.lastIndexOf("/") + 1);
+  return stripPath(url);
 }
 
 /**
@@ -372,7 +376,7 @@ function getPdfFilenameFromUrl(url, defaultFilename = "document.pdf") {
     try {
       let decoded = decodeURIComponent(name);
       if (decoded.includes("/")) {
-        decoded = decoded.split("/").at(-1);
+        decoded = stripPath(decoded);
         if (decoded.test(/^\.pdf$/i)) {
           return decoded;
         }
@@ -385,7 +389,7 @@ function getPdfFilenameFromUrl(url, defaultFilename = "document.pdf") {
   };
 
   const pdfRegex = /\.pdf$/i;
-  const filename = newURL.pathname.split("/").at(-1);
+  const filename = stripPath(newURL.pathname);
   if (pdfRegex.test(filename)) {
     return decode(filename);
   }
@@ -463,7 +467,7 @@ function isValidFetchUrl(url, baseUrl) {
   }
   const res = baseUrl ? URL.parse(url, baseUrl) : URL.parse(url);
   // The Fetch API only supports the http/https protocols, and not file/ftp.
-  return res?.protocol === "http:" || res?.protocol === "https:";
+  return /https?:/.test(res?.protocol ?? "");
 }
 
 /**
@@ -798,7 +802,7 @@ class CSSConstants {
 }
 
 function applyOpacity(r, g, b, opacity) {
-  opacity = Math.min(Math.max(opacity ?? 1, 0), 1);
+  opacity = MathClamp(opacity ?? 1, 0, 1);
   const white = 255 * (1 - opacity);
   r = Math.round(r * opacity + white);
   g = Math.round(g * opacity + white);
@@ -992,7 +996,7 @@ function renderRichText({ html, dir, className }, container) {
       intent: "richText",
     });
   }
-  fragment.firstChild.classList.add("richText", className);
+  fragment.firstElementChild.classList.add("richText", className);
   container.append(fragment);
 }
 
@@ -1034,6 +1038,213 @@ function makePathFromDrawOPS(data) {
   return path;
 }
 
+/**
+ * Maps between page IDs and page numbers, allowing bidirectional conversion
+ * between the two representations. This is useful when the page numbering
+ * in the PDF document doesn't match the default sequential ordering.
+ */
+class PagesMapper {
+  /**
+   * Maps page IDs to their corresponding page numbers.
+   * @type {Uint32Array|null}
+   */
+  #idToPageNumber = null;
+
+  /**
+   * Maps page numbers to their corresponding page IDs.
+   * @type {Uint32Array|null}
+   */
+  #pageNumberToId = null;
+
+  /**
+   * Previous mapping of page IDs to page numbers.
+   * @type {Uint32Array|null}
+   */
+  #prevIdToPageNumber = null;
+
+  /**
+   * The total number of pages.
+   * @type {number}
+   */
+  #pagesNumber = 0;
+
+  /**
+   * Listeners for page changes.
+   * @type {Array<function>}
+   */
+  #listeners = [];
+
+  /**
+   * Gets the total number of pages.
+   * @returns {number} The number of pages.
+   */
+  get pagesNumber() {
+    return this.#pagesNumber;
+  }
+
+  /**
+   * Sets the total number of pages and initializes default mappings
+   * where page IDs equal page numbers (1-indexed).
+   * @param {number} n - The total number of pages.
+   */
+  set pagesNumber(n) {
+    if (this.#pagesNumber === n) {
+      return;
+    }
+    this.#pagesNumber = n;
+    if (n === 0) {
+      this.#pageNumberToId = null;
+      this.#idToPageNumber = null;
+    }
+  }
+
+  addListener(listener) {
+    this.#listeners.push(listener);
+  }
+
+  removeListener(listener) {
+    const index = this.#listeners.indexOf(listener);
+    if (index >= 0) {
+      this.#listeners.splice(index, 1);
+    }
+  }
+
+  #updateListeners() {
+    for (const listener of this.#listeners) {
+      listener();
+    }
+  }
+
+  #init(mustInit) {
+    if (this.#pageNumberToId) {
+      return;
+    }
+    const n = this.#pagesNumber;
+
+    // Allocate a single array for better memory locality.
+    const array = new Uint32Array(3 * n);
+    const pageNumberToId = (this.#pageNumberToId = array.subarray(0, n));
+    const idToPageNumber = (this.#idToPageNumber = array.subarray(n, 2 * n));
+    if (mustInit) {
+      for (let i = 0; i < n; i++) {
+        pageNumberToId[i] = idToPageNumber[i] = i + 1;
+      }
+    }
+    this.#prevIdToPageNumber = array.subarray(2 * n);
+  }
+
+  /**
+   * Move a set of pages to a new position while keeping ID→number mappings in
+   * sync.
+   *
+   * @param {Set<number>} selectedPages - Page numbers being moved (1-indexed).
+   * @param {number[]} pagesToMove - Ordered list of page numbers to move.
+   * @param {number} index - Zero-based insertion index in the page-number list.
+   */
+  movePages(selectedPages, pagesToMove, index) {
+    this.#init(true);
+    const pageNumberToId = this.#pageNumberToId;
+    const idToPageNumber = this.#idToPageNumber;
+    this.#prevIdToPageNumber.set(idToPageNumber);
+    const movedCount = pagesToMove.length;
+    const mappedPagesToMove = new Uint32Array(movedCount);
+    let removedBeforeTarget = 0;
+
+    for (let i = 0; i < movedCount; i++) {
+      const pageIndex = pagesToMove[i] - 1;
+      mappedPagesToMove[i] = pageNumberToId[pageIndex];
+      if (pageIndex < index) {
+        removedBeforeTarget += 1;
+      }
+    }
+
+    const pagesNumber = this.#pagesNumber;
+    // target index after removing elements that were before it
+    let adjustedTarget = index - removedBeforeTarget;
+    const remainingLen = pagesNumber - movedCount;
+    adjustedTarget = MathClamp(adjustedTarget, 0, remainingLen);
+
+    // Create the new mapping.
+    // First copy over the pages that are not being moved.
+    // Then insert the moved pages at the target position.
+    for (let i = 0, r = 0; i < pagesNumber; i++) {
+      if (!selectedPages.has(i + 1)) {
+        pageNumberToId[r++] = pageNumberToId[i];
+      }
+    }
+
+    // Shift the pages after the target position.
+    pageNumberToId.copyWithin(
+      adjustedTarget + movedCount,
+      adjustedTarget,
+      remainingLen
+    );
+    // Finally insert the moved pages.
+    pageNumberToId.set(mappedPagesToMove, adjustedTarget);
+
+    let hasChanged = false;
+    for (let i = 0, ii = pagesNumber; i < ii; i++) {
+      const id = pageNumberToId[i];
+      hasChanged ||= id !== i + 1;
+      idToPageNumber[id - 1] = i + 1;
+    }
+    this.#updateListeners();
+
+    if (!hasChanged) {
+      // Reset.
+      this.pagesNumber = 0;
+    }
+  }
+
+  /**
+   * Checks if the page mappings have been altered from their initial state.
+   * @returns {boolean} True if the mappings have been altered, false otherwise.
+   */
+  hasBeenAltered() {
+    return this.#pageNumberToId !== null;
+  }
+
+  /**
+   * Gets the current page mapping suitable for saving.
+   * @returns {Object} An object containing the page indices.
+   */
+  getPageMappingForSaving() {
+    // Saving is index-based.
+    return {
+      pageIndices: this.#idToPageNumber
+        ? this.#idToPageNumber.map(x => x - 1)
+        : null,
+    };
+  }
+
+  getPrevPageNumber(pageNumber) {
+    return this.#prevIdToPageNumber[this.#pageNumberToId[pageNumber - 1] - 1];
+  }
+
+  /**
+   * Gets the page number for a given page ID.
+   * @param {number} id - The page ID (1-indexed).
+   * @returns {number} The page number, or the ID itself if no mapping exists.
+   */
+  getPageNumber(id) {
+    return this.#idToPageNumber?.[id - 1] ?? id;
+  }
+
+  /**
+   * Gets the page ID for a given page number.
+   * @param {number} pageNumber - The page number (1-indexed).
+   * @returns {number} The page ID, or the page number itself if no mapping
+   * exists.
+   */
+  getPageId(pageNumber) {
+    return this.#pageNumberToId?.[pageNumber - 1] ?? pageNumber;
+  }
+
+  getMapping() {
+    return this.#pageNumberToId.subarray(0, this.pagesNumber);
+  }
+}
+
 export {
   applyOpacity,
   ColorScheme,
@@ -1054,6 +1265,7 @@ export {
   makePathFromDrawOPS,
   noContextMenu,
   OutputScale,
+  PagesMapper,
   PageViewport,
   PDFDateString,
   PixelsPerInch,

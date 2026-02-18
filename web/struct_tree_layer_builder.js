@@ -61,8 +61,8 @@ const PDF_ROLE_TO_HTML_ROLE = {
   TR: "row",
   TH: "columnheader",
   TD: "cell",
-  THead: "columnheader",
-  TBody: null,
+  THead: "rowgroup",
+  TBody: "rowgroup",
   TFoot: null,
   // Standard structure type Caption
   Caption: null,
@@ -155,10 +155,7 @@ class MathMLSanitizer {
               "accentunder",
               "columnspan",
               "rowspan",
-            ].map(name => ({
-              name,
-              namespace: MathMLNamespace,
-            })),
+            ],
             comments: false,
           })
         : null
@@ -186,6 +183,10 @@ class StructTreeLayerBuilder {
   #rawDims;
 
   #elementsToAddToTextLayer = null;
+
+  #elementsToHideInTextLayer = null;
+
+  #elementsToStealFromTextLayer = null;
 
   /**
    * @param {StructTreeLayerBuilderOptions} options
@@ -307,18 +308,52 @@ class StructTreeLayerBuilder {
     return true;
   }
 
-  addElementsToTextLayer() {
-    if (!this.#elementsToAddToTextLayer) {
-      return;
+  updateTextLayer() {
+    if (this.#elementsToAddToTextLayer) {
+      for (const [id, img] of this.#elementsToAddToTextLayer) {
+        document.getElementById(id)?.append(img);
+      }
+      this.#elementsToAddToTextLayer.clear();
+      this.#elementsToAddToTextLayer = null;
     }
-    for (const [id, img] of this.#elementsToAddToTextLayer) {
-      document.getElementById(id)?.append(img);
+    if (this.#elementsToHideInTextLayer) {
+      for (const id of this.#elementsToHideInTextLayer) {
+        const elem = document.getElementById(id);
+        if (elem) {
+          elem.ariaHidden = true;
+        }
+      }
+      this.#elementsToHideInTextLayer.length = 0;
+      this.#elementsToHideInTextLayer = null;
     }
-    this.#elementsToAddToTextLayer.clear();
-    this.#elementsToAddToTextLayer = null;
+    if (this.#elementsToStealFromTextLayer) {
+      for (
+        let i = 0, ii = this.#elementsToStealFromTextLayer.length;
+        i < ii;
+        i += 2
+      ) {
+        const element = this.#elementsToStealFromTextLayer[i];
+        const ids = this.#elementsToStealFromTextLayer[i + 1];
+        let textContent = "";
+        for (const id of ids) {
+          const elem = document.getElementById(id);
+          if (elem) {
+            textContent += elem.textContent.trim() || "";
+            // Aria-hide the element in order to avoid duplicate reading of the
+            // math content by screen readers.
+            elem.ariaHidden = "true";
+          }
+        }
+        if (textContent) {
+          element.textContent = textContent;
+        }
+      }
+      this.#elementsToStealFromTextLayer.length = 0;
+      this.#elementsToStealFromTextLayer = null;
+    }
   }
 
-  #walk(node) {
+  #walk(node, parentNodes = []) {
     if (!node) {
       return null;
     }
@@ -326,15 +361,31 @@ class StructTreeLayerBuilder {
     let element;
     if ("role" in node) {
       const { role } = node;
-      element = MathMLElements.has(role)
-        ? document.createElementNS(MathMLNamespace, role)
-        : document.createElement("span");
+      if (MathMLElements.has(role)) {
+        element = document.createElementNS(MathMLNamespace, role);
+        const ids = [];
+        (this.#elementsToStealFromTextLayer ||= []).push(element, ids);
+        for (const { type, id } of node.children || []) {
+          if (type === "content" && id) {
+            ids.push(id);
+          }
+        }
+      } else {
+        element = document.createElement("span");
+      }
       const match = role.match(HEADING_PATTERN);
       if (match) {
         element.setAttribute("role", "heading");
         element.setAttribute("aria-level", match[1]);
       } else if (PDF_ROLE_TO_HTML_ROLE[role]) {
-        element.setAttribute("role", PDF_ROLE_TO_HTML_ROLE[role]);
+        element.setAttribute(
+          "role",
+          role === "TH" &&
+            parentNodes.at(-1)?.role === "TR" &&
+            parentNodes.at(-2)?.role === "TBody"
+            ? "rowheader" // TH inside TR itself in TBody is a rowheader.
+            : PDF_ROLE_TO_HTML_ROLE[role]
+        );
       }
       if (role === "Figure" && this.#addImageInTextLayer(node, element)) {
         return element;
@@ -344,6 +395,19 @@ class StructTreeLayerBuilder {
           element.setHTML(node.mathML, {
             sanitizer: MathMLSanitizer.sanitizer,
           });
+          // Hide all the corresponding content elements in the text layer in
+          // order to avoid screen readers reading both the MathML and the
+          // text content.
+          for (const { id } of node.children || []) {
+            if (!id) {
+              continue;
+            }
+            (this.#elementsToHideInTextLayer ||= []).push(id);
+          }
+          // For now, we don't want to keep the alt text if there's valid
+          // MathML (see https://github.com/w3c/mathml-aam/issues/37).
+          // TODO: Revisit this decision in the future.
+          delete node.alt;
         }
         if (
           !node.mathML &&
@@ -351,6 +415,7 @@ class StructTreeLayerBuilder {
           node.children[0].role !== "math"
         ) {
           element = document.createElementNS(MathMLNamespace, "math");
+          delete node.alt;
         }
       }
     }
@@ -365,9 +430,11 @@ class StructTreeLayerBuilder {
         // parent node to avoid creating an extra span.
         this.#setAttributes(node.children[0], element);
       } else {
+        parentNodes.push(node);
         for (const kid of node.children) {
-          element.append(this.#walk(kid));
+          element.append(this.#walk(kid, parentNodes));
         }
+        parentNodes.pop();
       }
     }
     return element;

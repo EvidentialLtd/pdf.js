@@ -18,14 +18,15 @@
 // eslint-disable-next-line max-len
 /** @typedef {import("../../web/text_accessibility.js").TextAccessibilityManager} TextAccessibilityManager */
 // eslint-disable-next-line max-len
-/** @typedef {import("../../web/interfaces").IDownloadManager} IDownloadManager */
-/** @typedef {import("../../web/interfaces").IPDFLinkService} IPDFLinkService */
-// eslint-disable-next-line max-len
 /** @typedef {import("../src/display/editor/tools.js").AnnotationEditorUIManager} AnnotationEditorUIManager */
 // eslint-disable-next-line max-len
 /** @typedef {import("../../web/struct_tree_layer_builder.js").StructTreeLayerBuilder} StructTreeLayerBuilder */
 // eslint-disable-next-line max-len
 /** @typedef {import("../../web/comment_manager.js").CommentManager} CommentManager */
+// eslint-disable-next-line max-len
+/** @typedef {import("../../web/pdf_link_service.js").PDFLinkService} PDFLinkService */
+// eslint-disable-next-line max-len
+/** @typedef {import("../../web/base_download_manager.js").BaseDownloadManager} BaseDownloadManager */
 
 import {
   AnnotationBorderStyleType,
@@ -57,8 +58,8 @@ const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60 * 1000;
  * @typedef {Object} AnnotationElementParameters
  * @property {Object} data
  * @property {HTMLDivElement} layer
- * @property {IPDFLinkService} linkService
- * @property {IDownloadManager} [downloadManager]
+ * @property {PDFLinkService} linkService
+ * @property {BaseDownloadManager} [downloadManager]
  * @property {AnnotationStorage} [annotationStorage]
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   for annotation icons. Include trailing slash.
@@ -293,7 +294,7 @@ class AnnotationElement {
       this.annotationStorage.setValue(`${AnnotationEditorPrefix}${data.id}`, {
         id: data.id,
         annotationType: data.annotationType,
-        pageIndex: this.parent.page._pageIndex,
+        page: this.parent.page,
         popup,
         popupRef: data.popupRef,
         modificationDate: new Date(),
@@ -3740,8 +3741,8 @@ class FileAttachmentAnnotationElement extends AnnotationElement {
  * @property {HTMLDivElement} div
  * @property {Array} annotations
  * @property {PDFPageProxy} page
- * @property {IPDFLinkService} linkService
- * @property {IDownloadManager} [downloadManager]
+ * @property {PDFLinkService} linkService
+ * @property {BaseDownloadManager} [downloadManager]
  * @property {AnnotationStorage} [annotationStorage]
  * @property {string} [imageResourcesPath] - Path for image resources, mainly
  *   for annotation icons. Include trailing slash.
@@ -4022,8 +4023,6 @@ class AnnotationLayer {
    * Add link annotations to the annotation layer.
    *
    * @param {Array<Object>} annotations
-   * @param {IPDFLinkService} linkService
-   * @memberof AnnotationLayer
    */
   async addLinkAnnotations(annotations) {
     const elementParams = {

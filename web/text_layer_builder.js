@@ -307,6 +307,9 @@ class TextLayerBuilder {
         if (anchor.nodeType === Node.TEXT_NODE) {
           anchor = anchor.parentNode;
         }
+        if (anchor.classList?.contains("highlight")) {
+          anchor = anchor.parentNode;
+        }
         if (!modifyStart && range.endOffset === 0) {
           do {
             while (!anchor.previousSibling) {
@@ -321,6 +324,7 @@ class TextLayerBuilder {
         if (endDiv) {
           endDiv.style.width = parentTextLayer.style.width;
           endDiv.style.height = parentTextLayer.style.height;
+          endDiv.style.userSelect = "text";
           anchor.parentElement.insertBefore(
             endDiv,
             modifyStart ? anchor : anchor.nextSibling
